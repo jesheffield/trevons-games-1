@@ -392,7 +392,6 @@ public class MainMenu extends javax.swing.JPanel {
 
     private void CheckersClicked(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CheckersClicked
         
-        make_pretty();
         if(locally_radiob.isSelected())  //local play
         {
             java.awt.EventQueue.invokeLater(new Runnable() 
@@ -400,10 +399,12 @@ public class MainMenu extends javax.swing.JPanel {
                 @Override
                 public void run() 
                 {
+                    CheckersDialog c = new CheckersDialog();
                     //CheckersGUI game = new CheckersGUI(false, new byte[] {}); //2 params, whether or not it's online and the ip addr
-                    CheckersGUI game = new CheckersGUI();
+                    /*CheckersGUI game = new CheckersGUI();
                     game.setVisible(true);
                     game.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    game.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);*/
                 }
             });
         }
@@ -416,6 +417,7 @@ public class MainMenu extends javax.swing.JPanel {
                 {
                     final CheckersGUI game = new CheckersGUI(true, get_ip_array(ip_input_box.getText()));
                     game.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    game.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
                     
                     class Waiting_handler implements Runnable
                     {
@@ -459,8 +461,58 @@ public class MainMenu extends javax.swing.JPanel {
     }//GEN-LAST:event_CheckersClicked
 
     private void GomokuClicked(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GomokuClicked
-        GomokuGUI g = new GomokuGUI();
-        g.playGame(); //if statement "unclicks" gomoku when game is over
+        
+        if(locally_radiob.isSelected())
+        {
+            GomokuGUI g = new GomokuGUI(false, new byte[] {});
+            g.playGame(); 
+            g.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            g.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        }
+        else //online play
+        {
+            java.awt.EventQueue.invokeLater(new Runnable() 
+            {
+                @Override
+                public void run() 
+                {
+                    final GomokuGUI g = new GomokuGUI(true, get_ip_array(ip_input_box.getText()));
+                    g.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    g.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+                    
+                    class Waiting_handler implements Runnable
+                    {
+                        @Override
+                        public void run()
+                        {
+                            
+                            if(g.myTurn)
+                            {
+                                g.waitForOpponent_host();// put in thread
+                                g.wait_window.dispose();
+                                if(g.iquit)
+                                {
+                                    return;
+                                }
+                                g.setVisible(true);//put in thread
+                            }
+                            else
+                            {
+                                g.waitForOpponent_nothost();// put in thread
+                                g.wait_window.dispose();
+                                g.paintAll(g.getGraphics()); //makes sure to draw the board before triggering the block
+                                g.setVisible(true);//put in thread
+                                System.out.println("waiting for opponents first move");
+                                g.waitForMove();
+                            }
+                        }
+                    }
+                    Thread t = new Thread(new Waiting_handler());
+                    t.start();
+                }
+            });
+        }
+        
     }//GEN-LAST:event_GomokuClicked
 
     private void MancalaClicked(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MancalaClicked
